@@ -253,26 +253,26 @@ resource "aws_s3_bucket" "muh-bucket" {
   }
 }
 
-resource "aws_s3_bucket_policy" "muh_bucket_policy" {
-  bucket = aws_s3_bucket.muh-bucket.id
+# resource "aws_s3_bucket_policy" "muh_bucket_policy" {
+#   bucket = aws_s3_bucket.muh-bucket.id
 
-  policy = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Principal": {
-          "AWS": "${aws_iam_role.full_access_role.arn}"
-        },
-        "Action": "s3:*",
-        "Resource": [
-          "${aws_s3_bucket.muh-bucket.arn}",
-          "${aws_s3_bucket.muh-bucket.arn}/*"
-        ]
-      }
-    ]
-  })
-}
+#   policy = jsonencode({
+#     "Version": "2012-10-17",
+#     "Statement": [
+#       {
+#         "Effect": "Allow",
+#         "Principal": {
+#           "AWS": "${aws_iam_role.full_access_role.arn}"
+#         },
+#         "Action": "s3:*",
+#         "Resource": [
+#           "${aws_s3_bucket.muh-bucket.arn}",
+#           "${aws_s3_bucket.muh-bucket.arn}/*"
+#         ]
+#       }
+#     ]
+#   })
+# }
 
 /*--------------------------------Ec2 module----------------------------------*/
 
@@ -307,7 +307,7 @@ module "playbot" {
   subnet_id             = aws_subnet.muh_bot_public_subnets[*].id
   key_name              = aws_key_pair.my_key_1.key_name
 
-  depends_on = [aws_s3_bucket.muh-bucket, aws_s3_bucket_policy.muh_bucket_policy]   
+  #depends_on = [aws_s3_bucket.muh-bucket, aws_s3_bucket_policy.muh_bucket_policy]   
 }
 
 module "yolo5" {
@@ -319,7 +319,7 @@ module "yolo5" {
   subnet_id             = aws_subnet.muh_bot_public_subnets[0].id
   key_name              = aws_key_pair.my_key_1.key_name
 
-  depends_on = [aws_s3_bucket.muh-bucket, aws_s3_bucket_policy.muh_bucket_policy]  
+  #depends_on = [aws_s3_bucket.muh-bucket, aws_s3_bucket_policy.muh_bucket_policy]  
 }
 
 
