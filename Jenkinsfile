@@ -20,7 +20,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 deleteDir() // Clean the workspace before cloning
-                sh "ls -lart" // List files to verify clean workspace (Unix equivalent of `dir`)
+                sh 'ls -lart' // List files to verify clean workspace (Unix equivalent of `dir`)
                 // Clone repository
                 checkout scm: [
                     $class: 'GitSCM',
@@ -28,7 +28,7 @@ pipeline {
                     extensions: [],
                     userRemoteConfigs: [[url: "${GIT_REPO_URL}"]]
                 ]
-                sh "ls -lart" // List files to verify clone (Unix equivalent of `dir`)
+                sh 'ls -lart' // List files to verify clone (Unix equivalent of `dir`)
             }
         }
 
@@ -36,11 +36,16 @@ pipeline {
             steps {
                 script {
                     def dockerfilePath = 'playbot/ec2_one/Dockerfile'
+                    def buildContext = 'playbot'
                     def imageName = 'playbot-ec2-one'
                     def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
                     
+                    // Print directory structure for debugging
+                    sh 'ls -lart playbot'
+                    sh 'ls -lart playbot/ec2_one'
+
                     // Build Docker image
-                    sh "docker build -t ${imageTag} -f ${dockerfilePath} ."
+                    sh "docker build -t ${imageTag} -f ${dockerfilePath} ${buildContext}"
                 }
             }
         }
