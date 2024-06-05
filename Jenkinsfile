@@ -75,7 +75,7 @@ pipeline {
                     echo "=================Terraform Init=================="
                     echo "Choice : ${params.zonechoice}"
                     dir('jenkins_terrform_project') { // Navigate to the directory containing main.tf
-                        sh "terraform init -var 'zone=${params.zonechoice}'"
+                        sh "terraform init "
                     }
                 }
             }
