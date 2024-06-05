@@ -79,10 +79,8 @@ pipeline {
                     echo "=================Terraform Init=================="
                     echo "Choice : ${params.zonechoice}"
                     sh 'ls -lart' // List files to verify clone (Unix equivalent of `dir`)
-                    dir('jenkins_terrform_project') { // Navigate to the directory containing main.tf
-                        echo "Current directory: ${pwd()}"
-                        sh "terraform init "
-                    }
+                    // Execute terraform init in the current directory
+                    sh "terraform init"
                 }
             }
         }
