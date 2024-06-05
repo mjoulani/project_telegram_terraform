@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    // agent any
+    agent {
+        label 'agent1'
+    }
+
 
     environment {
         TF_VAR_zone = "${params.zonechoice}"
