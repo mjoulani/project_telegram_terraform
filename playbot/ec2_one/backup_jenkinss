@@ -1,12 +1,13 @@
 pipeline {
     agent any
-    tools {
+     tools {
+        // Define the tool
         terraform 'terraform_jenkins'
-    }
+     }
 
     environment {
         TF_VAR_zone = "${params.zonechoice}"
-        DOCKER_HUB_CREDENTIALS = credentials('dockerhub')
+        DOCKER_HUB_CREDENTIALS = credentials('dockerhub') // Ensure 'dockerhub' matches the ID of your credentials
         DOCKER_HUB_REPO = 'mjoulani'
         GIT_REPO_URL = 'https://github.com/mjoulani/project_telegram_terraform.git'
         THE_VALIE_NONE = credentials('aws_muh')
@@ -23,39 +24,49 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                deleteDir()
-                sh 'ls -lart'
+                deleteDir() // Clean the workspace before cloning
+                sh 'ls -lart' // List files to verify clean workspace (Unix equivalent of `dir`)
+                // Clone repository
                 checkout scm: [
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
                     extensions: [],
                     userRemoteConfigs: [[url: "${GIT_REPO_URL}"]]
                 ]
-                sh 'ls -lart'
+                sh 'ls -lart' // List files to verify clone (Unix equivalent of `dir`)
             }
         }
 
-        stage('Build and Push Docker Images') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    def images = [
-                        [name: 'playbot-ec2-one', context: 'playbot/ec2_one', dockerfile: 'playbot/ec2_one/Dockerfile'],
-                        [name: 'playbot-ec2-two', context: 'playbot/ec2_two', dockerfile: 'playbot/ec2_two/Dockerfile'],
-                        [name: 'yolo5-ec2', context: 'yolo5', dockerfile: 'yolo5/Dockerfile']
-                    ]
+                    def dockerfilePath = 'playbot/ec2_one/Dockerfile'
+                    def buildContext = 'playbot/ec2_one'
+                    def imageName = 'playbot-ec2-one'
+                    def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
+                    
+                    // Print directory structure for debugging
+                    sh 'ls -lart playbot/ec2_one'
 
-                    for (image in images) {
-                        def imageTag = "${DOCKER_HUB_REPO}/${image.name}:latest"
+                    // Build Docker image
+                    sh "docker build -t ${imageTag} -f ${dockerfilePath} ${buildContext}"
+                }
+            }
+        }
 
-                        echo "Building Docker image: ${image.name}"
-                        sh "docker build -t ${imageTag} -f ${image.dockerfile} ${image.context}"
-
-                        echo "Pushing Docker image: ${image.name}"
-                        withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR')]) {
-                            sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                        }
-                        sh "docker push ${imageTag}"
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    // Login to Docker Hub
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR')]) {
+                        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
                     }
+                    
+                    def imageName = 'playbot-ec2-one'
+                    def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
+                    
+                    // Push Docker image
+                    sh "docker push ${imageTag}"
                 }
             }
         }
@@ -68,7 +79,8 @@ pipeline {
                 script {
                     echo "=================Terraform Init=================="
                     echo "Choice : ${params.zonechoice}"
-                    sh 'ls -lart'
+                    sh 'ls -lart' // List files to verify clone (Unix equivalent of `dir`)
+                    // Execute terraform init in the current directory
                     sh "terraform init"
                 }
             }
@@ -117,5 +129,3 @@ pipeline {
         }
     }
 }
-
-
