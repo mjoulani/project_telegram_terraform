@@ -41,7 +41,7 @@ pipeline {
                     def images = [
                         [name: 'playbot-ec2-one', context: 'playbot/ec2_one', dockerfile: 'playbot/ec2_one/Dockerfile'],
                         [name: 'playbot-ec2-two', context: 'playbot/ec2_two', dockerfile: 'playbot/ec2_two/Dockerfile'],
-                        [name: 'yolo5-ec2', context: 'yolo5', dockerfile: 'yolo5/Dockerfile']
+                        [name: 'yolo5-ec2', context: 'yolo5/ec2_yolo5', dockerfile: 'yolo5/ec2_yolo5/Dockerfile']
                     ]
 
                     for (image in images) {
