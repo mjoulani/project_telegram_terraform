@@ -1,10 +1,6 @@
 pipeline {
-    // agent any
-    agent {
-        label 'agent1'
-    }
-
-
+    agent any
+  
     environment {
         TF_VAR_zone = "${params.zonechoice}"
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub')
