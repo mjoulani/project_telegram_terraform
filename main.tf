@@ -273,6 +273,22 @@ resource "aws_s3_bucket" "muh-bucket" {
 #     ]
 #   })
 # }
+/*-------------------------dymamody--------------------------------------------*/
+resource "aws_dynamodb_table" "prediction_summary" {
+  name           = "prediction_summary"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "primary_key"
+
+  attribute {
+    name = "primary_key"
+    type = "S"
+  }
+  tags = {
+    Name = "prediction_summary"
+  }
+}
+
+
 
 /*--------------------------------Ec2 module----------------------------------*/
 
