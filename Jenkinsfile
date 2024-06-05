@@ -1,6 +1,9 @@
 pipeline {
     agent any
-    tool name: 'terraform_jenkins', type: 'terraform'
+     tools {
+        // Define the tool
+        terraform 'terraform_jenkins'
+     }
 
     environment {
         TF_VAR_zone = "${params.zonechoice}"
