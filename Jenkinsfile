@@ -36,12 +36,11 @@ pipeline {
             steps {
                 script {
                     def dockerfilePath = 'playbot/ec2_one/Dockerfile'
-                    def buildContext = 'playbot'
+                    def buildContext = 'playbot/ec2_one'
                     def imageName = 'playbot-ec2-one'
                     def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
                     
                     // Print directory structure for debugging
-                    sh 'ls -lart playbot'
                     sh 'ls -lart playbot/ec2_one'
 
                     // Build Docker image
