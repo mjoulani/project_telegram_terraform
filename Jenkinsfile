@@ -52,6 +52,10 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
+                    // Print Docker Hub username to verify credentials
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
+                        echo "Docker Hub Username: ${DOCKER_HUB_USERNAME}"
+                    }
                     docker.withRegistry('', "${DOCKER_HUB_CREDENTIALS}") {
                         def imageName = 'playbot-ec2-one'
                         def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
