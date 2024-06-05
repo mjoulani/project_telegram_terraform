@@ -87,7 +87,7 @@ pipeline {
                     echo "=================Terraform Plan=================="
                     //sh 'env | grep TF_VAR_zone'
                     dir('jenkins_terrform_project') { 
-                        // Navigate to the directory containing main.tf
+                        // Navigate to  the directory containing main.tf
                         //sh 'terraform apply -auto-approve'
                         sh "terraform plan -var 'zone=${params.zonechoice}'"
                     }
