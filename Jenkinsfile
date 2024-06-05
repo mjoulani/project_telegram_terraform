@@ -35,7 +35,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def dockerfilePath = 'project_telegram_terraform/playbot/ec2_one/Dockerfile'
+                    def dockerfilePath = 'playbot/ec2_one/Dockerfile'
                     def imageName = 'playbot-ec2-one'
                     def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
                     
