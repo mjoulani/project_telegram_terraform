@@ -10,6 +10,7 @@ pipeline {
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub') // Ensure 'dockerhub' matches the ID of your credentials
         DOCKER_HUB_REPO = 'mjoulani'
         GIT_REPO_URL = 'https://github.com/mjoulani/project_telegram_terraform.git'
+        THE_VALIE_NONE = credentials('aws_muh')
     }
 
     parameters {
