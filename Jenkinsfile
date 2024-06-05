@@ -90,9 +90,8 @@ pipeline {
                     ]
                     def token_zone = tokens[params.zonechoice]
 
-                    dir('jenkins_terrform_project') {
-                        sh "terraform plan -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}'"
-                    }
+                    sh 'ls -lart'  // List files to ensure region.tfvars exists
+                    sh "terraform plan -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}'"
                 }
             }
         }
@@ -113,9 +112,8 @@ pipeline {
                     ]
                     def token_zone = tokens[params.zonechoice]
 
-                    dir('jenkins_terrform_project') {
-                        sh "terraform apply -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
-                    }
+                    sh 'ls -lart'  // List files to ensure region.tfvars exists
+                    sh "terraform apply -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
                 }
             }
         }
@@ -136,9 +134,8 @@ pipeline {
                     ]
                     def token_zone = tokens[params.zonechoice]
 
-                    dir('jenkins_terrform_project') {
-                        sh "terraform destroy -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
-                    }
+                    sh 'ls -lart'  // List files to ensure region.tfvars exists
+                    sh "terraform destroy -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
                 }
             }
         }
