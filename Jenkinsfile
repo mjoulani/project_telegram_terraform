@@ -1,6 +1,6 @@
 pipeline {
     agent any
-  
+
     environment {
         TF_VAR_zone = "${params.zonechoice}"
         DOCKER_HUB_CREDENTIALS = credentials('dockerhub')
@@ -9,43 +9,43 @@ pipeline {
     }
 
     parameters {
-        choice choices:['us-west-1', 'eu-west-1', 'eu-west-2', 'sa-east-1'], description: 'Choice Zone', name: 'zonechoice'
-        booleanParam(name:'Init_TERRAFORM', defaultValue: false, description: 'Check to init Terraform changes')
+        choice choices: ['us-west-1', 'eu-west-1', 'eu-west-2', 'sa-east-1'], description: 'Choice Zone', name: 'zonechoice'
+        booleanParam(name: 'Init_TERRAFORM', defaultValue: false, description: 'Check to init Terraform changes')
         booleanParam(name: 'PLAN_TERRAFORM', defaultValue: false, description: 'Check to plan Terraform changes')
         booleanParam(name: 'APPLY_TERRAFORM', defaultValue: false, description: 'Check to apply Terraform changes')
-        booleanParam(name: 'DESTROY_TERRAFORM', defaultValue: false, description: 'Check to apply Terraform changes')
+        booleanParam(name: 'DESTROY_TERRAFORM', defaultValue: false, description: 'Check to destroy Terraform-managed infrastructure')
     }
 
     stages {
         stage('Clone Repository') {
             steps {
-                // Clean the workspace before cloning
-                deleteDir()
-                //git branch: 'jenkins_terrafor/muhamed_joulani', url: 'https://github.com/AlexeyMihaylovDev/atech-devops-nov-2023.git'
-                sh "ls -lart"
+                deleteDir() // Clean the workspace before cloning
+                bat "dir" // List files to verify clean workspace (Windows equivalent of `ls -lart`)
                 // Clone repository
                 checkout scm: [
                     $class: 'GitSCM',
-                    branches: [[name: 'main']],
+                    branches: [[name: '*/main']],
                     extensions: [],
                     userRemoteConfigs: [[url: "${GIT_REPO_URL}"]]
                 ]
-                sh "ls -lart" //  List files to verify clone
+                bat "dir" // List files to verify clone (Windows equivalent of `ls -lart`)
             }
         }
-    stage('Build Docker Image') {
+
+        stage('Build Docker Image') {
             steps {
                 script {
-                    def dockerfilePath = 'project_telegram_terraform/playbot/ec2_one/'
+                    def dockerfilePath = 'project_telegram_terraform/playbot/ec2_one/Dockerfile'
                     def imageName = 'playbot-ec2-one'
                     def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
                     
                     // Build Docker image
-                    sh "docker build -t ${imageTag} -f ${dockerfilePath} ."
+                    bat "docker build -t ${imageTag} -f ${dockerfilePath} ."
                 }
             }
         }
-    stage('Push Docker Image') {
+
+        stage('Push Docker Image') {
             steps {
                 script {
                     docker.withRegistry('', "${DOCKER_HUB_CREDENTIALS}") {
@@ -53,7 +53,7 @@ pipeline {
                         def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
                         
                         // Push Docker image
-                        sh "docker push ${imageTag}"
+                        bat "docker push ${imageTag}"
                     }
                 }
             }
@@ -67,13 +67,9 @@ pipeline {
                 script {
                     echo "=================Terraform Init=================="
                     echo "Choice : ${params.zonechoice}"
-                    //sh "export TF_VAR_zone='${params.zonechoice}'" // Ensure proper substitution
-                    //sh 'env | grep TF_VAR_zone'
                     dir('jenkins_terrform_project') { // Navigate to the directory containing main.tf
-                                //sh 'terraform init'
-                                sh "terraform init -var 'zone=${params.zonechoice}'"
+                        bat "terraform init -var 'zone=${params.zonechoice}'"
                     }
-                    // Additional steps for Terraform init
                 }
             }
         }
@@ -84,14 +80,10 @@ pipeline {
             }
             steps {
                 script {
-                    echo "=================Terraform Plan======================"
-                    //sh 'env | grep TF_VAR_zone'
+                    echo "=================Terraform Plan=================="
                     dir('jenkins_terrform_project') { 
-                        // Navigate to  the directory containing main.tf
-                        //sh 'terraform apply -auto-approve'
-                        sh "terraform plan -var 'zone=${params.zonechoice}'"
+                        bat "terraform plan -var 'zone=${params.zonechoice}'"
                     }
-                    // Additional steps for Terraform plan
                 }
             }
         }
@@ -104,12 +96,8 @@ pipeline {
                 script {
                     echo "=================Terraform Apply=================="
                     dir('jenkins_terrform_project') { 
-                        // Navigate to the directory containing main.tf
-                        sh "terraform apply -var 'zone=${params.zonechoice}' -auto-approve"
+                        bat "terraform apply -var 'zone=${params.zonechoice}' -auto-approve"
                     }
-                    //sh 'env | grep TF_VAR_zone'
-                    //sh 'terraform apply -auto-approve'
-                    // Additional steps for Terraform apply
                 }
             }
         }
@@ -122,12 +110,8 @@ pipeline {
                 script {
                     echo "=================Terraform Destroy=================="
                     dir('jenkins_terrform_project') { 
-                        // Navigate to the directory containing main.tf
-                        sh "terraform destroy  -auto-approve"
+                        bat "terraform destroy -auto-approve"
                     }
-                    //sh 'env | grep TF_VAR_zone'
-                    //sh 'terraform destroy -auto-approve'
-                    // Additional steps for Terraform destroy
                 }
             }
         }
