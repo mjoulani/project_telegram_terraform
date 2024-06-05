@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         TF_VAR_zone = "${params.zonechoice}"
-        DOCKER_HUB_CREDENTIALS = credentials('dockerhub')
+        DOCKER_HUB_CREDENTIALS = credentials('dockerhub') // Ensure 'dockerhub' matches the ID of your credentials
         DOCKER_HUB_REPO = 'mjoulani'
         GIT_REPO_URL = 'https://github.com/mjoulani/project_telegram_terraform.git'
     }
@@ -52,17 +52,16 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Print Docker Hub username to verify credentials
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
-                        echo "Docker Hub Username: ${DOCKER_HUB_USERNAME}"
+                    // Login to Docker Hub
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR')]) {
+                        sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
                     }
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_HUB_CREDENTIALS}") {
-                        def imageName = 'playbot-ec2-one'
-                        def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
-                        
-                        // Push Docker image
-                        sh "docker push ${imageTag}"
-                    }
+                    
+                    def imageName = 'playbot-ec2-one'
+                    def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
+                    
+                    // Push Docker image
+                    sh "docker push ${imageTag}"
                 }
             }
         }
