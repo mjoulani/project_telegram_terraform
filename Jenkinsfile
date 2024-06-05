@@ -20,7 +20,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 deleteDir() // Clean the workspace before cloning
-                bat "dir" // List files to verify clean workspace (Windows equivalent of `ls -lart`)
+                sh "ls -lart" // List files to verify clean workspace (Unix equivalent of `dir`)
                 // Clone repository
                 checkout scm: [
                     $class: 'GitSCM',
@@ -28,7 +28,7 @@ pipeline {
                     extensions: [],
                     userRemoteConfigs: [[url: "${GIT_REPO_URL}"]]
                 ]
-                bat "dir" // List files to verify clone (Windows equivalent of `ls -lart`)
+                sh "ls -lart" // List files to verify clone (Unix equivalent of `dir`)
             }
         }
 
@@ -40,7 +40,7 @@ pipeline {
                     def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
                     
                     // Build Docker image
-                    bat "docker build -t ${imageTag} -f ${dockerfilePath} ."
+                    sh "docker build -t ${imageTag} -f ${dockerfilePath} ."
                 }
             }
         }
@@ -53,7 +53,7 @@ pipeline {
                         def imageTag = "${DOCKER_HUB_REPO}/${imageName}:latest"
                         
                         // Push Docker image
-                        bat "docker push ${imageTag}"
+                        sh "docker push ${imageTag}"
                     }
                 }
             }
@@ -68,7 +68,7 @@ pipeline {
                     echo "=================Terraform Init=================="
                     echo "Choice : ${params.zonechoice}"
                     dir('jenkins_terrform_project') { // Navigate to the directory containing main.tf
-                        bat "terraform init -var 'zone=${params.zonechoice}'"
+                        sh "terraform init -var 'zone=${params.zonechoice}'"
                     }
                 }
             }
@@ -82,7 +82,7 @@ pipeline {
                 script {
                     echo "=================Terraform Plan=================="
                     dir('jenkins_terrform_project') { 
-                        bat "terraform plan -var 'zone=${params.zonechoice}'"
+                        sh "terraform plan -var 'zone=${params.zonechoice}'"
                     }
                 }
             }
@@ -96,7 +96,7 @@ pipeline {
                 script {
                     echo "=================Terraform Apply=================="
                     dir('jenkins_terrform_project') { 
-                        bat "terraform apply -var 'zone=${params.zonechoice}' -auto-approve"
+                        sh "terraform apply -var 'zone=${params.zonechoice}' -auto-approve"
                     }
                 }
             }
@@ -110,10 +110,11 @@ pipeline {
                 script {
                     echo "=================Terraform Destroy=================="
                     dir('jenkins_terrform_project') { 
-                        bat "terraform destroy -auto-approve"
+                        sh "terraform destroy -auto-approve"
                     }
                 }
             }
         }
     }
 }
+
