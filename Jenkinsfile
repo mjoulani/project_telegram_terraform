@@ -10,10 +10,19 @@ pipeline {
         DOCKER_HUB_REPO = 'mjoulani'
         GIT_REPO_URL = 'https://github.com/mjoulani/project_telegram_terraform.git'
         THE_VALIE_NONE = credentials('aws_muh')
+
+        // Define tokens globally
+        TOKENS = [
+            'us-east-1': '6671531875:AAG0nnI0XX_kneDgsOXNfclJi0V0tpuGwBU',
+            'ap-south-1': '7044416595:AAFDY6RAiufAjCvsot6L-rdaPh9CXiglO_U',
+            'eu-central-1': '7147432970:AAElUbz9aCKVVv7rIpPOfXS3sdjqaS6i4Lg',
+            'eu-west-1': '7188330154:AAHc8Vtm6iLZ9iWtQ_-z40OvYUb0qxZpc78',
+            'sa-east-1':'6485930075:AAEvoo4mqpG13fEZJLB0vW50eShyWIeV0gc'
+        ]
     }
 
     parameters {
-        choice choices: ['us-west-1', 'eu-west-1', 'eu-west-2', 'sa-east-1'], description: 'Choice Zone', name: 'zonechoice'
+        choice choices: ['us-east-1', 'ap-south-1', 'eu-central-1', 'eu-west-1','sa-east-1'], description: 'Choice Zone', name: 'zonechoice'
         booleanParam(name: 'Init_TERRAFORM', defaultValue: false, description: 'Check to init Terraform changes')
         booleanParam(name: 'PLAN_TERRAFORM', defaultValue: false, description: 'Check to plan Terraform changes')
         booleanParam(name: 'APPLY_TERRAFORM', defaultValue: false, description: 'Check to apply Terraform changes')
@@ -81,8 +90,10 @@ pipeline {
             steps {
                 script {
                     echo "=================Terraform Plan=================="
-                    dir('jenkins_terrform_project') { 
-                        sh "terraform plan -var 'zone=${params.zonechoice}'"
+                    def token_zone = TOKENS[params.zonechoice]
+
+                    dir('jenkins_terrform_project') {
+                        sh "terraform plan -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}'"
                     }
                 }
             }
@@ -95,8 +106,10 @@ pipeline {
             steps {
                 script {
                     echo "=================Terraform Apply=================="
-                    dir('jenkins_terrform_project') { 
-                        sh "terraform apply -var 'zone=${params.zonechoice}' -auto-approve"
+                    def token_zone = TOKENS[params.zonechoice]
+
+                    dir('jenkins_terrform_project') {
+                        sh "terraform apply -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
                     }
                 }
             }
@@ -109,13 +122,16 @@ pipeline {
             steps {
                 script {
                     echo "=================Terraform Destroy=================="
-                    dir('jenkins_terrform_project') { 
-                        sh "terraform destroy -auto-approve"
+                    def token_zone = TOKENS[params.zonechoice]
+
+                    dir('jenkins_terrform_project') {
+                        sh "terraform destroy -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
                     }
                 }
             }
         }
     }
 }
+
 
 
