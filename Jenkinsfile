@@ -125,9 +125,9 @@ pipeline {
             steps {
                 script {
                     def instances = [
-                        'muh_ec2_one': 'playbot-ec2-one',
-                        'muh_ec2_two': 'playbot-ec2-two',
-                        'muh_ec2_yolo5': 'yolo5-ec2'
+                        'public-dns-ec2-one': 'playbot-ec2-one',
+                        'public-dns-ec2-two': 'playbot-ec2-two',
+                        'public-dns-ec2-yolo5': 'yolo5-ec2'
                     ]
                     
                     def keyPath = "my-key-1.pem"
@@ -135,23 +135,23 @@ pipeline {
                     
                     instances.each { instance, image ->
                         sh """
-                            ssh -i ${keyPath} ${user}@${instance} << EOF
+                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${instance} << EOF
                             sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
-                            sudo docker run -d --name ${instance} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
+                            sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
                             echo '[Unit]
-                            Description=Start ${instance} Docker container
+                            Description=Start ${image} Docker container
                             Requires=docker.service
                             After=docker.service
 
                             [Service]
                             Restart=always
-                            ExecStart=/usr/bin/docker start -a ${instance}
-                            ExecStop=/usr/bin/docker stop -t 2 ${instance}
+                            ExecStart=/usr/bin/docker start -a ${image}
+                            ExecStop=/usr/bin/docker stop -t 2 ${image}
 
                             [Install]
-                            WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${instance}.service
-                            sudo systemctl enable ${instance}.service
-                            sudo systemctl start ${instance}.service
+                            WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
+                            sudo systemctl enable ${image}.service
+                            sudo systemctl start ${image}.service
                             EOF
                         """
                     }
@@ -176,12 +176,14 @@ pipeline {
                     def token_zone = tokens[params.zonechoice]
 
                     sh 'ls -lart'  // List files to ensure region.tfvars exists
-                    sh "terraform destroy -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
+                    sh "terraform destroy -var-file=\"region.tfvars\" -
+                    var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
                 }
             }
         }
     }
 }
+
 
 
 
