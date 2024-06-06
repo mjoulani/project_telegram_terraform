@@ -118,6 +118,47 @@ pipeline {
             }
         }
 
+        stage('Run Docker Containers on EC2 Instances') {
+            when {
+                expression { params.APPLY_TERRAFORM }
+            }
+            steps {
+                script {
+                    def instances = [
+                        'muh_ec2_one': 'playbot-ec2-one',
+                        'muh_ec2_two': 'playbot-ec2-two',
+                        'muh_ec2_yolo5': 'yolo5-ec2'
+                    ]
+                    
+                    def keyPath = "my-key-1.pem"
+                    def user = 'ubuntu'
+                    
+                    instances.each { instance, image ->
+                        sh """
+                            ssh -i ${keyPath} ${user}@${instance} << EOF
+                            sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
+                            sudo docker run -d --name ${instance} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
+                            echo '[Unit]
+                            Description=Start ${instance} Docker container
+                            Requires=docker.service
+                            After=docker.service
+
+                            [Service]
+                            Restart=always
+                            ExecStart=/usr/bin/docker start -a ${instance}
+                            ExecStop=/usr/bin/docker stop -t 2 ${instance}
+
+                            [Install]
+                            WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${instance}.service
+                            sudo systemctl enable ${instance}.service
+                            sudo systemctl start ${instance}.service
+                            EOF
+                        """
+                    }
+                }
+            }
+        }
+
         stage('Terraform Destroy') {
             when {
                 expression { params.DESTROY_TERRAFORM }
@@ -141,6 +182,7 @@ pipeline {
         }
     }
 }
+
 
 
 
