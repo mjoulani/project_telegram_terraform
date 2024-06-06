@@ -162,25 +162,25 @@ pipeline {
         stage('Terraform Destroy') {
             when {
                 expression { params.DESTROY_TERRAFORM }
-            }
+            }   
             steps {
                 script {
                     echo "=================Terraform Destroy=================="
                     def tokens = [
                         'us-east-1': '6671531875:AAG0nnI0XX_kneDgsOXNfclJi0V0tpuGwBU',
                         'ap-south-1': '7044416595:AAFDY6RAiufAjCvsot6L-rdaPh9CXiglO_U',
-                        'eu-central-1': '7147432970:AAElUbz9aCKVVv7rIpPOfXS3sdjqaS6i4Lg',
-                        'eu-west-1': '7188330154:AAHc8Vtm6iLZ9iWtQ_-z40OvYUb0qxZpc78',
+                            'eu-central-1': '7147432970:AAElUbz9aCKVVv7rIpPOfXS3sdjqaS6i4Lg',
+                            'eu-west-1': '7188330154:AAHc8Vtm6iLZ9iWtQ_-z40OvYUb0qxZpc78',
                         'sa-east-1': '6485930075:AAEvoo4mqpG13fEZJLB0vW50eShyWIeV0gc'
                     ]
                     def token_zone = tokens[params.zonechoice]
 
                     sh 'ls -lart'  // List files to ensure region.tfvars exists
-                    sh "terraform destroy -var-file=\"region.tfvars\" -
-                    var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
+                    sh "terraform destroy -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
                 }
             }
         }
+
     }
 }
 
