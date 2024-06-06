@@ -1,5 +1,6 @@
 pipeline {
     agent any
+    
     tools {
         terraform 'terraform_jenkins'
     }
@@ -119,45 +120,56 @@ pipeline {
         }
 
         stage('Run Docker Containers on EC2 Instances') {
-            when {
-                expression { params.APPLY_TERRAFORM }
-            }
-            steps {
-                script {
-                    def instances = [
-                        'public-dns-ec2-one': 'playbot-ec2-one',
-                        'public-dns-ec2-two': 'playbot-ec2-two',
-                        'public-dns-ec2-yolo5': 'yolo5-ec2'
-                    ]
+        when {
+            expression { params.APPLY_TERRAFORM }
+        }
+        steps {
+            script {
+                // Retrieve IP addresses after Terraform apply
+                def instanceIds = sh(script: "terraform output -json instance_ids", returnStdout: true).trim()
+                def publicIps = sh(script: "aws ec2 describe-instances --instance-ids ${instanceIds} --query 'Reservations[*].Instances[*].PublicIpAddress' --output text", returnStdout: true).trim().split()
+                
+                echo "Instance Public IPs: ${publicIps}"
+                
+                def instances = [
+                    [ip: publicIps[0], image: 'playbot-ec2-one'],
+                    [ip: publicIps[1], image: 'playbot-ec2-two'],
+                    [ip: publicIps[2], image: 'yolo5-ec2']
+                ]
+                
+                def keyPath = "my-key-1.pem"
+                def user    = 'ubuntu'
+                
+                instances.each { instance ->
+                    def ip = instance.ip
+                    def image = instance.image
                     
-                    def keyPath = "my-key-1.pem"
-                    def user = 'ubuntu'
-                    
-                    instances.each { instance, image ->
-                        sh """
-                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${instance} << EOF
-                            sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
-                            sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
-                            echo '[Unit]
-                            Description=Start ${image} Docker container
-                            Requires=docker.service
-                            After=docker.service
+                    sh """
+                        echo ${ip}
+                        ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip} << EOF
+                        sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
+                        sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
+                        echo '[Unit]
+                        Description=Start ${image} Docker container
+                        Requires=docker.service
+                        After=docker.service
 
-                            [Service]
-                            Restart=always
-                            ExecStart=/usr/bin/docker start -a ${image}
-                            ExecStop=/usr/bin/docker stop -t 2 ${image}
+                        [Service]
+                        Restart=always
+                        ExecStart=/usr/bin/docker start -a ${image}
+                        ExecStop=/usr/bin/docker stop -t 2 ${image}
 
-                            [Install]
-                            WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
-                            sudo systemctl enable ${image}.service
-                            sudo systemctl start ${image}.service
-                            EOF
-                        """
-                    }
+                        [Install]
+                        WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
+                        sudo systemctl enable ${image}.service
+                        sudo systemctl start ${image}.service
+                        EOF
+                    """
                 }
             }
         }
+    }
+
 
         stage('Terraform Destroy') {
             when {
@@ -169,8 +181,8 @@ pipeline {
                     def tokens = [
                         'us-east-1': '6671531875:AAG0nnI0XX_kneDgsOXNfclJi0V0tpuGwBU',
                         'ap-south-1': '7044416595:AAFDY6RAiufAjCvsot6L-rdaPh9CXiglO_U',
-                            'eu-central-1': '7147432970:AAElUbz9aCKVVv7rIpPOfXS3sdjqaS6i4Lg',
-                            'eu-west-1': '7188330154:AAHc8Vtm6iLZ9iWtQ_-z40OvYUb0qxZpc78',
+                        'eu-central-1': '7147432970:AAElUbz9aCKVVv7rIpPOfXS3sdjqaS6i4Lg',
+                        'eu-west-1': '7188330154:AAHc8Vtm6iLZ9iWtQ_-z40OvYUb0qxZpc78',
                         'sa-east-1': '6485930075:AAEvoo4mqpG13fEZJLB0vW50eShyWIeV0gc'
                     ]
                     def token_zone = tokens[params.zonechoice]
@@ -183,6 +195,8 @@ pipeline {
 
     }
 }
+
+
 
 
 
