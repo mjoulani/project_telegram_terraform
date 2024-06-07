@@ -138,6 +138,7 @@ pipeline {
             }
             steps {
                 script {
+                    sh 'ls -lart'
                     def yolo5Ip = yolo5Ec2PublicIp.replaceAll('"', '')
                     def playbotIps = playbotEc2PublicIps.replaceAll('[\\[\\]\"]', '').tokenize(',')
                     def publicIps = [yolo5Ip] + playbotIps
@@ -145,6 +146,8 @@ pipeline {
 
                     def keyPath = "my-key-1.pem"
                     sh "chmod 400 ${keyPath}"
+                    sh 'pwd'
+                    sh 'ls -lart'
 
                     def user = 'ubuntu'
                     def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
