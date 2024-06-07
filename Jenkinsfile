@@ -13,7 +13,7 @@ pipeline {
         THE_VALIE_NONE = credentials('aws_muh')
         yolo5Ec2PublicIp = ''
         playbotEc2PublicIps = ''
-        SSH_CREDENTIALS = 'ssh-key' // Add your SSH credentials ID here
+         SSH_CREDENTIALS = 'SecretIdKey' // Replace with your secret file credential ID
         
     }
 
@@ -144,21 +144,16 @@ pipeline {
                     def publicIps = [yolo5Ip] + playbotIps
                     echo "Instance Public IPs: ${publicIps}"
 
-                    def keyPath = "my-key-1.pem"
-                    sh "chmod 600 ${keyPath}"
-                    sh "chown jenkins:jenkins my-key-1.pem"
                     sh 'pwd'
                     sh 'ls -lart'
 
                     def user = 'ubuntu'
                     def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
 
-                    publicIps.eachWithIndex { ip, index ->
-                        def image = dockerImages[index]
-
+                    publicIps.each { ip ->
                         sh """
                             echo ${ip}
-                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip}.compute-1.amazonaws.com << EOF
+                            ssh -o StrictHostKeyChecking=no -i ${SSH_CREDENTIALS} ${user}@${ip}.compute-1.amazonaws.com << EOF
                             sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
                             sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
                             echo '[Unit]
