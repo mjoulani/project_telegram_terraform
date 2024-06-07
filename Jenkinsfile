@@ -147,13 +147,13 @@ pipeline {
                     def user = 'ubuntu'
                     def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
 
-                    // Iterate over each public IP and run Docker containers
+                    // Iterate over each public IP and run Docker containers -o StrictHostKeyChecking=no
                     publicIps.eachWithIndex { ip, index ->
                         def image = dockerImages[index]
 
                         sh """
                             echo ${ip}
-                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip} << EOF
+                            ssh  ${keyPath} -i ${user}@${ip} << EOF
                             sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
                             sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
                             echo '[Unit]
