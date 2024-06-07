@@ -133,50 +133,49 @@ pipeline {
         }
 
         stage('Run Docker Containers on EC2 Instances') {
-                when {
-                    expression { params.APPLY_TERRAFORM }
+            when {
+                expression { params.APPLY_TERRAFORM }
+            }
+            steps {
+                script {
+                    def yolo5Ip = yolo5Ec2PublicIp.replaceAll('"', '')
+                    def playbotIps = playbotEc2PublicIps.replaceAll('[\\[\\]\"]', '').tokenize(',')
+                    def publicIps = [yolo5Ip] + playbotIps
+                    echo "Instance Public IPs: ${publicIps}"
+
+                    def keyPath = "my-key-1.pem"
+                    sh "chmod 400 ${keyPath}"
+
+                    def user = 'ubuntu'
+                    def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
+
+                    publicIps.eachWithIndex { ip, index ->
+                        def image = dockerImages[index]
+
+                        sh """
+                            echo ${ip}
+                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip} << EOF
+                            sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
+                            sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
+                            echo '[Unit]
+                            Description=Start ${image} Docker container
+                            Requires=docker.service
+                            After=docker.service
+
+                            [Service]
+                            Restart=always
+                            ExecStart=/usr/bin/docker start -a ${image}
+                            ExecStop=/usr/bin/docker stop -t 2 ${image}
+
+                            [Install]
+                            WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
+                            sudo systemctl enable ${image}.service
+                            sudo systemctl start ${image}.service
+                            EOF
+                        """
+                    }
                 }
-                steps {
-                        script {
-                            // Split the Terraform output to get public IPs
-                            def publicIps = [yolo5Ec2PublicIp, playbotEc2PublicIps.tokenize(',')].flatten()
-                            echo "Instance Public IPs: ${publicIps}"
-
-                            // Define the SSH user
-                            def user = 'ubuntu'
-                            def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
-                            sh 'ls -lart'
-
-                            // Using sshagent to handle SSH keys securely
-                            sshagent(credentials: ['SSH_CREDENTIALS']) {
-                                publicIps.eachWithIndex { ip, index ->
-                                    def image = dockerImages[index]
-
-                                    sh """
-                                        echo ${ip}
-                                        ssh -o StrictHostKeyChecking=no -i ${env.SSH_CREDENTIALS} ${user}@${ip} << EOF
-                                        sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
-                                        sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
-                                        echo '[Unit]
-                                        Description=Start ${image} Docker container
-                                        Requires=docker.service
-                                        After=docker.service
-
-                                        [Service]
-                                        Restart=always
-                                        ExecStart=/usr/bin/docker start -a ${image}
-                                        ExecStop=/usr/bin/docker stop -t 2 ${image}
-
-                                        [Install]
-                                        WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
-                                        sudo systemctl enable ${image}.service
-                                        sudo systemctl start ${image}.service
-                                        EOF
-                                    """
-                                }
-                            }
-                        }
-                }
+            }
         }
 
 
