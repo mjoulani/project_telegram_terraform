@@ -145,7 +145,7 @@ pipeline {
                     echo "Instance Public IPs: ${publicIps}"
 
                     def keyPath = "my-key-1.pem"
-                    sh "chmod 400 ${keyPath}"
+                    sh "chmod 600 ${keyPath}"
                     sh 'pwd'
                     sh 'ls -lart'
 
@@ -157,7 +157,7 @@ pipeline {
 
                         sh """
                             echo ${ip}
-                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip} << EOF
+                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip}.compute-1.amazonaws.com << EOF
                             sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
                             sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
                             echo '[Unit]
