@@ -20,6 +20,7 @@ variable "subnet_id" {
   type = list(string)
 }
 
+
 variable "telegram_token" {
   type = string
 }
@@ -36,3 +37,5 @@ variable "s3_bucket_name" {
 variable "telegram_url" {
   type = string
 }
+
+

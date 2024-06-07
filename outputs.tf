@@ -25,17 +25,14 @@ output "sqs_queue_name" {
 # output "ec2_public_ip" {
 #   value = module.yolo5.ec2_public_ip
 # }
-output "ec2_yolo5_public_ip" {
+output "yolo5_ec2_public_ip" {
   value = module.yolo5.ec2_public_ip
 }
 
-output "ec2_playbot_public_ip_1" {
-  value = module.playbot.ec2_public_ip[0]
+output "playbot_ec2_public_ips" {
+  value = module.playbot.ec2_public_ips
 }
 
-output "ec2_playbot_public_ip_2" {
-  value = module.playbot.ec2_public_ip[1]
-}
 
 
 
