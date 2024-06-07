@@ -11,7 +11,9 @@ pipeline {
         DOCKER_HUB_REPO = 'mjoulani'
         GIT_REPO_URL = 'https://github.com/mjoulani/project_telegram_terraform.git'
         THE_VALIE_NONE = credentials('aws_muh')
-        TERRAFORM_OUTPUT = ''
+        yolo5Ec2PublicIp = ''
+        playbotEc2PublicIps = ''
+
     }
 
     parameters {
@@ -118,8 +120,13 @@ pipeline {
                     sh "terraform apply -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
 
                     // Retrieve the Terraform output for public_ips
-                    TERRAFORM_OUTPUT = sh(script: "terraform output -json public_ips", returnStdout: true).trim()
-                    echo "${TERRAFORM_OUTPUT}"
+                    // Retrieve the Terraform output for yolo5_ec2_public_ip
+                    yolo5Ec2PublicIp = sh(script: "terraform output -json yolo5_ec2_public_ip", returnStdout: true).trim()
+                    echo "Yolo5 EC2 Public IP: ${yolo5Ec2PublicIp}"
+
+                    // Retrieve the Terraform output for playbot_ec2_public_ips
+                    playbotEc2PublicIps = sh(script: "terraform output -json playbot_ec2_public_ips", returnStdout: true).trim()
+                    echo "Playbot EC2 Public IPs: ${playbotEc2PublicIps}"
                 }
             }
         }
@@ -131,8 +138,7 @@ pipeline {
             steps {
                 script {
                     // Split the Terraform output to get public IPs
-                    echo "${TERRAFORM_OUTPUT}"
-                    def publicIps = TERRAFORM_OUTPUT.split(',')
+                    def publicIps = [yolo5Ec2PublicIp, playbotEc2PublicIps.tokenize(',')]
                     echo "Instance Public IPs: ${publicIps}"
 
                     // Define the SSH key path and user
