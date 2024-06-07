@@ -143,6 +143,7 @@ pipeline {
 
                     // Define the SSH key path and user
                     def keyPath = "my-key-1.pem"
+                    sh "chmod 400 ${keyPath}" // Change permissions here
                     def user = 'ubuntu'
                     def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
 
