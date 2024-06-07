@@ -145,6 +145,7 @@ pipeline {
                             // Define the SSH user
                             def user = 'ubuntu'
                             def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
+                            sh 'ls -lart'
 
                             // Using sshagent to handle SSH keys securely
                             sshagent(credentials: ['SSH_CREDENTIALS']) {
