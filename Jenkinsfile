@@ -22,6 +22,11 @@ pipeline {
     }
 
     stages {
+        stage('Check AWS CLI') {
+            steps {
+                sh 'aws --version'
+            }
+        }
         stage('Clone Repository') {
             steps {
                 deleteDir()
@@ -148,7 +153,7 @@ pipeline {
     }
 
 
-
+       
         stage('Terraform Destroy') {
             when {
                 expression { params.DESTROY_TERRAFORM }
