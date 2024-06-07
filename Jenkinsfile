@@ -11,6 +11,7 @@ pipeline {
         DOCKER_HUB_REPO = 'mjoulani'
         GIT_REPO_URL = 'https://github.com/mjoulani/project_telegram_terraform.git'
         THE_VALIE_NONE = credentials('aws_muh')
+        TERRAFORM_OUTPUT = ''
     }
 
     parameters {
@@ -22,11 +23,6 @@ pipeline {
     }
 
     stages {
-        stage('Check AWS CLI') {
-            steps {
-                sh 'aws --version'
-            }
-        }
         stage('Clone Repository') {
             steps {
                 deleteDir()
@@ -102,58 +98,78 @@ pipeline {
             }
         }
 
-    stage('Run Docker Containers on EC2 Instances') {
-        when {
-            expression { params.APPLY_TERRAFORM }
-        }
-        steps {
-            script {
-                // Retrieve public IP addresses of running EC2 instances
-                def publicIps = sh(script: "aws ec2 describe-instances --filters \"Name=instance-state-name,Values=running\" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text", returnStdout: true).trim().split()
-                
-                echo "Instance Public IPs: ${publicIps}"
-                
-                def instances = [
-                    [ip: publicIps[0], image: 'playbot-ec2-one'],
-                    [ip: publicIps[1], image: 'playbot-ec2-two'],
-                    [ip: publicIps[2], image: 'yolo5-ec2']
-                ]
-                
-                def keyPath = "my-key-1.pem"
-                def user    = 'ubuntu'
-                
-                instances.each { instance ->
-                    def ip = instance.ip
-                    def image = instance.image
-                    
-                    sh """
-                        echo ${ip}
-                        ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip} << EOF
-                        sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
-                        sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
-                        echo '[Unit]
-                        Description=Start ${image} Docker container
-                        Requires=docker.service
-                        After=docker.service
+        stage('Terraform Apply') {
+            when {
+                expression { params.APPLY_TERRAFORM }
+            }
+            steps {
+                script {
+                    echo "=================Terraform Apply=================="
+                    def tokens = [
+                        'us-east-1': '6671531875:AAG0nnI0XX_kneDgsOXNfclJi0V0tpuGwBU',
+                        'ap-south-1': '7044416595:AAFDY6RAiufAjCvsot6L-rdaPh9CXiglO_U',
+                        'eu-central-1': '7147432970:AAElUbz9aCKVVv7rIpPOfXS3sdjqaS6i4Lg',
+                        'eu-west-1': '7188330154:AAHc8Vtm6iLZ9iWtQ_-z40OvYUb0qxZpc78',
+                        'sa-east-1': '6485930075:AAEvoo4mqpG13fEZJLB0vW50eShyWIeV0gc'
+                    ]
+                    def token_zone = tokens[params.zonechoice]
 
-                        [Service]
-                        Restart=always
-                        ExecStart=/usr/bin/docker start -a ${image}
-                        ExecStop=/usr/bin/docker stop -t 2 ${image}
+                    sh 'ls -lart'  // List files to ensure region.tfvars exists
+                    sh "terraform apply -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
 
-                        [Install]
-                        WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
-                        sudo systemctl enable ${image}.service
-                        sudo systemctl start ${image}.service
-                        EOF
-                    """
+                    // Retrieve the Terraform output for public_ips
+                    TERRAFORM_OUTPUT = sh(script: "terraform output -json public_ips", returnStdout: true).trim()
                 }
             }
         }
-    }
+
+        stage('Run Docker Containers on EC2 Instances') {
+            when {
+                expression { params.APPLY_TERRAFORM }
+            }
+            steps {
+                script {
+                    // Split the Terraform output to get public IPs
+                    def publicIps = TERRAFORM_OUTPUT.split(',')
+                    echo "Instance Public IPs: ${publicIps}"
+
+                    // Define the SSH key path and user
+                    def keyPath = "my-key-1.pem"
+                    def user = 'ubuntu'
+                    def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
+
+                    // Iterate over each public IP and run Docker containers
+                    publicIps.eachWithIndex { ip, index ->
+                        def image = dockerImages[index]
+
+                        sh """
+                            echo ${ip}
+                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip} << EOF
+                            sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
+                            sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
+                            echo '[Unit]
+                            Description=Start ${image} Docker container
+                            Requires=docker.service
+                            After=docker.service
+
+                            [Service]
+                            Restart=always
+                            ExecStart=/usr/bin/docker start -a ${image}
+                            ExecStop=/usr/bin/docker stop -t 2 ${image}
+
+                            [Install]
+                            WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
+                            sudo systemctl enable ${image}.service
+                            sudo systemctl start ${image}.service
+                            EOF
+                        """
+                    }
+                }
+            }
+        }
 
 
-       
+
         stage('Terraform Destroy') {
             when {
                 expression { params.DESTROY_TERRAFORM }
