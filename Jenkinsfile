@@ -97,37 +97,14 @@ pipeline {
             }
         }
 
-        stage('Terraform Apply') {
-            when {
-                expression { params.APPLY_TERRAFORM }
-            }
-            steps {
-                script {
-                    echo "=================Terraform Apply=================="
-                    def tokens = [
-                        'us-east-1': '6671531875:AAG0nnI0XX_kneDgsOXNfclJi0V0tpuGwBU',
-                        'ap-south-1': '7044416595:AAFDY6RAiufAjCvsot6L-rdaPh9CXiglO_U',
-                        'eu-central-1': '7147432970:AAElUbz9aCKVVv7rIpPOfXS3sdjqaS6i4Lg',
-                        'eu-west-1': '7188330154:AAHc8Vtm6iLZ9iWtQ_-z40OvYUb0qxZpc78',
-                        'sa-east-1': '6485930075:AAEvoo4mqpG13fEZJLB0vW50eShyWIeV0gc'
-                    ]
-                    def token_zone = tokens[params.zonechoice]
-
-                    sh 'ls -lart'  // List files to ensure region.tfvars exists
-                    sh "terraform apply -var-file=\"region.tfvars\" -var 'region_aws=${params.zonechoice}' -var 'telegram_token=${token_zone}' -auto-approve"
-                }
-            }
-        }
-
-        stage('Run Docker Containers on EC2 Instances') {
+    stage('Run Docker Containers on EC2 Instances') {
         when {
             expression { params.APPLY_TERRAFORM }
         }
         steps {
             script {
-                // Retrieve IP addresses after Terraform apply
-                // def instanceIds = sh(script: "terraform output -json instance_ids", returnStdout: true).trim()
-                def publicIps = sh(script: "aws ec2 describe-instances --instance-ids ${instanceIds} --query 'Reservations[*].Instances[*].PublicIpAddress' --output text", returnStdout: true).trim().split()
+                // Retrieve public IP addresses of running EC2 instances
+                def publicIps = sh(script: "aws ec2 describe-instances --filters \"Name=instance-state-name,Values=running\" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text", returnStdout: true).trim().split()
                 
                 echo "Instance Public IPs: ${publicIps}"
                 
@@ -169,6 +146,7 @@ pipeline {
             }
         }
     }
+
 
 
         stage('Terraform Destroy') {
