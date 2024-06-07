@@ -137,23 +137,22 @@ pipeline {
             }
             steps {
                 script {
-                    // Split the Terraform output to get public IPs
-                    def publicIps = [yolo5Ec2PublicIp, playbotEc2PublicIps.tokenize(',')]
-                    echo "Instance Public IPs: ${publicIps}"
+                // Split the Terraform output to get public IPs
+                def publicIps = [yolo5Ec2PublicIp, playbotEc2PublicIps.tokenize(',')].flatten()
+                echo "Instance Public IPs: ${publicIps}"
 
-                    // Define the SSH key path and user
-                    def keyPath = "my-key-1.pem"
-                    sh "chmod 600 ${keyPath}" // Change permissions here
-                    def user = 'ubuntu'
-                    def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
+                // Define the SSH user
+                def user = 'ubuntu'
+                def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
 
-                    // Iterate over each public IP and run Docker containers -o StrictHostKeyChecking=no
+                // Using sshagent to handle SSH keys securely
+                sshagent(credentials: ['SSH_CREDENTIALS']) {
                     publicIps.eachWithIndex { ip, index ->
                         def image = dockerImages[index]
 
                         sh """
                             echo ${ip}
-                            ssh  ${keyPath} -i ${user}@${ip} << EOF
+                            ssh -o StrictHostKeyChecking=no -i ${env.SSH_CREDENTIALS} ${user}@${ip} << EOF
                             sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
                             sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
                             echo '[Unit]
