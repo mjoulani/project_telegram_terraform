@@ -22,9 +22,21 @@ output "sqs_queue_name" {
   value = aws_sqs_queue.muh_bot_sqs.name
 }
 
-output "ec2_public_ip" {
+# output "ec2_public_ip" {
+#   value = module.yolo5.ec2_public_ip
+# }
+output "ec2_yolo5_public_ip" {
   value = module.yolo5.ec2_public_ip
 }
+
+output "ec2_playbot_public_ip_1" {
+  value = module.playbot.ec2_public_ip[0]
+}
+
+output "ec2_playbot_public_ip_2" {
+  value = module.playbot.ec2_public_ip[1]
+}
+
 
 
 
