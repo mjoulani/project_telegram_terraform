@@ -108,43 +108,19 @@ pipeline {
         }
         steps {
             script {
-                // Retrieve AWS credentials from Jenkins credentials
-                def awsCredentials = credentials('aws_muh')
-
-                // Extract AWS credentials
-                def awsAccessKeyId = awsCredentials.id
-                def awsSecretAccessKey = awsCredentials.secret
-
-                // Assume a default region or specify your desired region
-                def region = params.zonechoice
-
-                // Use AWS SDK to interact with EC2
-                def AWS = library('aws-sdk')
-                def ec2 = AWS.createEC2Client(awsAccessKeyId, awsSecretAccessKey, region)
-
-                // Retrieve running EC2 instances and their public IPs
-                def reservations = ec2.describeInstances().getReservations()
-                def publicIps = []
-                reservations.each { reservation ->
-                    reservation.getInstances().each { instance ->
-                        if (instance.getState().getName() == 'running') {
-                            publicIps.add(instance.getPublicIpAddress())
-                        }
-                    }
-                }
+                // Retrieve public IP addresses of running EC2 instances
+                def publicIps = sh(script: "aws ec2 describe-instances --filters \"Name=instance-state-name,Values=running\" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text", returnStdout: true).trim().split()
                 
-                // Log public IPs for verification
                 echo "Instance Public IPs: ${publicIps}"
-
-                // Proceed with running Docker containers on EC2 instances
-                def keyPath = "my-key-1.pem"
-                def user    = 'ubuntu'
                 
                 def instances = [
                     [ip: publicIps[0], image: 'playbot-ec2-one'],
                     [ip: publicIps[1], image: 'playbot-ec2-two'],
                     [ip: publicIps[2], image: 'yolo5-ec2']
                 ]
+                
+                def keyPath = "my-key-1.pem"
+                def user    = 'ubuntu'
                 
                 instances.each { instance ->
                     def ip = instance.ip
@@ -175,7 +151,6 @@ pipeline {
             }
         }
     }
-
 
 
        
