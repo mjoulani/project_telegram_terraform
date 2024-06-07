@@ -13,7 +13,8 @@ pipeline {
         THE_VALIE_NONE = credentials('aws_muh')
         yolo5Ec2PublicIp = ''
         playbotEc2PublicIps = ''
-
+        SSH_CREDENTIALS = 'ssh-key' // Add your SSH credentials ID here
+        
     }
 
     parameters {
