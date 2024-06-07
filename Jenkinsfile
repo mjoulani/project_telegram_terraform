@@ -119,6 +119,7 @@ pipeline {
 
                     // Retrieve the Terraform output for public_ips
                     TERRAFORM_OUTPUT = sh(script: "terraform output -json public_ips", returnStdout: true).trim()
+                    echo "${TERRAFORM_OUTPUT}"
                 }
             }
         }
@@ -130,6 +131,7 @@ pipeline {
             steps {
                 script {
                     // Split the Terraform output to get public IPs
+                    echo "${TERRAFORM_OUTPUT}"
                     def publicIps = TERRAFORM_OUTPUT.split(',')
                     echo "Instance Public IPs: ${publicIps}"
 
