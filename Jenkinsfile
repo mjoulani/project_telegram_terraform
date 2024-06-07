@@ -150,7 +150,8 @@ pipeline {
                     def user = 'ubuntu'
                     def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
 
-                    publicIps.each { ip ->
+                    publicIps.eachWithIndex { ip, index ->
+                        def image = dockerImages[index]
                         sh """
                             echo ${ip}
                             ssh -o StrictHostKeyChecking=no -i ${SSH_CREDENTIALS} ${user}@${ip}.compute-1.amazonaws.com << EOF
