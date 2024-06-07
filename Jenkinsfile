@@ -133,50 +133,50 @@ pipeline {
         }
 
         stage('Run Docker Containers on EC2 Instances') {
-            when {
-                expression { params.APPLY_TERRAFORM }
-            }
-            steps {
-                script {
-                // Split the Terraform output to get public IPs
-                def publicIps = [yolo5Ec2PublicIp, playbotEc2PublicIps.tokenize(',')].flatten()
-                echo "Instance Public IPs: ${publicIps}"
-
-                // Define the SSH user
-                def user = 'ubuntu'
-                def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
-
-                // Using sshagent to handle SSH keys securely
-                sshagent(credentials: ['SSH_CREDENTIALS']) {
-                    publicIps.eachWithIndex { ip, index ->
-                        def image = dockerImages[index]
-
-                        sh """
-                            echo ${ip}
-                            ssh -o StrictHostKeyChecking=no -i ${env.SSH_CREDENTIALS} ${user}@${ip} << EOF
-                            sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
-                            sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
-                            echo '[Unit]
-                            Description=Start ${image} Docker container
-                            Requires=docker.service
-                            After=docker.service
-
-                            [Service]
-                            Restart=always
-                            ExecStart=/usr/bin/docker start -a ${image}
-                            ExecStop=/usr/bin/docker stop -t 2 ${image}
-
-                            [Install]
-                            WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
-                            sudo systemctl enable ${image}.service
-                            sudo systemctl start ${image}.service
-                            EOF
-                        """
-                    }
+                when {
+                    expression { params.APPLY_TERRAFORM }
                 }
-            }
-        }
+                steps {
+                        script {
+                            // Split the Terraform output to get public IPs
+                            def publicIps = [yolo5Ec2PublicIp, playbotEc2PublicIps.tokenize(',')].flatten()
+                            echo "Instance Public IPs: ${publicIps}"
 
+                            // Define the SSH user
+                            def user = 'ubuntu'
+                            def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
+
+                            // Using sshagent to handle SSH keys securely
+                            sshagent(credentials: ['SSH_CREDENTIALS']) {
+                                publicIps.eachWithIndex { ip, index ->
+                                    def image = dockerImages[index]
+
+                                    sh """
+                                        echo ${ip}
+                                        ssh -o StrictHostKeyChecking=no -i ${env.SSH_CREDENTIALS} ${user}@${ip} << EOF
+                                        sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
+                                        sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
+                                        echo '[Unit]
+                                        Description=Start ${image} Docker container
+                                        Requires=docker.service
+                                        After=docker.service
+
+                                        [Service]
+                                        Restart=always
+                                        ExecStart=/usr/bin/docker start -a ${image}
+                                        ExecStop=/usr/bin/docker stop -t 2 ${image}
+
+                                        [Install]
+                                        WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
+                                        sudo systemctl enable ${image}.service
+                                        sudo systemctl start ${image}.service
+                                        EOF
+                                    """
+                                }
+                            }
+                        }
+                }
+        }
 
 
         stage('Terraform Destroy') {
