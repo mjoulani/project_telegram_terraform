@@ -147,7 +147,6 @@ pipeline {
                     def keyPath = "my-key-1.pem"
                     sh "chmod 600 ${keyPath}"
                     sh "chown jenkins:jenkins my-key-1.pem"
-"
                     sh 'pwd'
                     sh 'ls -lart'
 
