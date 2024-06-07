@@ -126,7 +126,7 @@ pipeline {
         steps {
             script {
                 // Retrieve IP addresses after Terraform apply
-                def instanceIds = sh(script: "terraform output -json instance_ids", returnStdout: true).trim()
+                // def instanceIds = sh(script: "terraform output -json instance_ids", returnStdout: true).trim()
                 def publicIps = sh(script: "aws ec2 describe-instances --instance-ids ${instanceIds} --query 'Reservations[*].Instances[*].PublicIpAddress' --output text", returnStdout: true).trim().split()
                 
                 echo "Instance Public IPs: ${publicIps}"
