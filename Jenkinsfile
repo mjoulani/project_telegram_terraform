@@ -13,7 +13,7 @@ pipeline {
         THE_VALIE_NONE = credentials('aws_muh')
         yolo5Ec2PublicIp = ''
         playbotEc2PublicIps = ''
-         SSH_CREDENTIALS = 'SecretIdKey' // Replace with your secret file credential ID
+         SSH_CREDENTIALS = 'your-secret-file-credential-id' // Replace with your secret file credential ID
         
     }
 
@@ -107,7 +107,7 @@ pipeline {
             }
             steps {
                 script {
-                    echo "=================Terraform Apply=================="
+                    echo "=================Terraform Apply===================="
                     def tokens = [
                         'us-east-1': '6671531875:AAG0nnI0XX_kneDgsOXNfclJi0V0tpuGwBU',
                         'ap-south-1': '7044416595:AAFDY6RAiufAjCvsot6L-rdaPh9CXiglO_U',
@@ -144,36 +144,39 @@ pipeline {
                     def publicIps = [yolo5Ip] + playbotIps
                     echo "Instance Public IPs: ${publicIps}"
 
+                    def keyPath = "my-key-1.pem"
+                    sh "chmod 600 ${keyPath}"
+                    sh "chown jenkins:jenkins my-key-1.pem"
                     sh 'pwd'
                     sh 'ls -lart'
 
                     def user = 'ubuntu'
                     def dockerImages = ['playbot-ec2-one', 'playbot-ec2-two', 'yolo5-ec2']
 
-                    publicIps.each { ip ->
-                        dockerImages.each { image ->
-                            sh """
-                                echo ${ip}
-                                ssh -o StrictHostKeyChecking=no -i ${SSH_CREDENTIALS} ${user}@${ip}.compute-1.amazonaws.com << EOF
-                                sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
-                                sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
-                                echo '[Unit]
-                                Description=Start ${image} Docker container
-                                Requires=docker.service
-                                After=docker.service
+                    publicIps.eachWithIndex { ip, index ->
+                        def image = dockerImages[index]
 
-                                [Service]
-                                Restart=always
-                                ExecStart=/usr/bin/docker start -a ${image}
-                                ExecStop=/usr/bin/docker stop -t 2 ${image}
+                        sh """
+                            echo ${ip}
+                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip}.compute-1.amazonaws.com << EOF
+                            sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
+                            sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
+                            echo '[Unit]
+                            Description=Start ${image} Docker container
+                            Requires=docker.service
+                            After=docker.service
 
-                                [Install]
-                                WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
-                                sudo systemctl enable ${image}.service
-                                sudo systemctl start ${image}.service
-                                EOF
-                            """
-                        }
+                            [Service]
+                            Restart=always
+                            ExecStart=/usr/bin/docker start -a ${image}
+                            ExecStop=/usr/bin/docker stop -t 2 ${image}
+
+                            [Install]
+                            WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
+                            sudo systemctl enable ${image}.service
+                            sudo systemctl start ${image}.service
+                            EOF
+                        """
                     }
                 }
             }
