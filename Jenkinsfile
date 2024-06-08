@@ -145,7 +145,7 @@ pipeline {
                     echo "Instance Public IPs: ${publicIps}"
 
                     def keyPath = "test_jen.pem"
-                    sh "chmod 600 ${keyPath}"
+                    sh "chmod 400 ${keyPath}"
                     sh "chown jenkins:jenkins test_jen.pem"
                     sh 'pwd'
                     sh 'ls -lart'
