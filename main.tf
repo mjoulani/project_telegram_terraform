@@ -58,10 +58,10 @@ provider "aws" {
   shared_credentials_files = ["C:\\Users\\muham.DESKTOP-T5LGP3O\\.aws\\credentials"]
 }
 
-resource "aws_key_pair" "my_key_1" {
-  key_name   = "my-key-1"
-  public_key = file("my-key-1.pub")
-  tags = { Name = "my_key_1" }
+resource "aws_key_pair" "test_jen" {
+  key_name   = "test_jen"
+  public_key = file("test_jen.pub")
+  tags = { Name = "test_jen" }
 }
 
 
@@ -323,7 +323,7 @@ module "playbot" {
   instance_profile_name = aws_iam_instance_profile.instance_profile.name
   security_group_id     = aws_security_group.muh_bot_security_group.id
   subnet_id             = aws_subnet.muh_bot_public_subnets[*].id
-  key_name              = aws_key_pair.my_key_1.key_name
+  key_name              = aws_key_pair.test_jen.key_name
 
   #depends_on = [aws_s3_bucket.muh-bucket, aws_s3_bucket_policy.muh_bucket_policy]   
 }
@@ -335,7 +335,7 @@ module "yolo5" {
   instance_profile_name = aws_iam_instance_profile.instance_profile.name
   security_group_id     = aws_security_group.muh_bot_security_group.id
   subnet_id             = aws_subnet.muh_bot_public_subnets[0].id
-  key_name              = aws_key_pair.my_key_1.key_name
+  key_name              = aws_key_pair.test_jen.key_name
 
   #depends_on = [aws_s3_bucket.muh-bucket, aws_s3_bucket_policy.muh_bucket_policy]  
 }

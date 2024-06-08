@@ -144,9 +144,9 @@ pipeline {
                     def publicIps = [yolo5Ip] + playbotIps
                     echo "Instance Public IPs: ${publicIps}"
 
-                    def keyPath = "my-key-1.pem"
+                    def keyPath = "test_jen.pem"
                     sh "chmod 600 ${keyPath}"
-                    sh "chown jenkins:jenkins my-key-1.pem"
+                    sh "chown jenkins:jenkins test_jen.pem"
                     sh 'pwd'
                     sh 'ls -lart'
 
