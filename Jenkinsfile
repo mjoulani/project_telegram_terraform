@@ -158,7 +158,7 @@ pipeline {
 
                         sh """
                             echo ${ip}
-                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip}.compute-1.amazonaws.com << EOF
+                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip}<< EOF
                             sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
                             sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
                             echo '[Unit]
