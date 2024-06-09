@@ -158,7 +158,8 @@ pipeline {
 
                         sh """
                             echo ${ip}
-                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip}<< EOF
+                            ssh -t -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip}<< 'EOF'
+                            set -e
                             sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
                             sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
                             echo '[Unit]
@@ -175,8 +176,9 @@ pipeline {
                             WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
                             sudo systemctl enable ${image}.service
                             sudo systemctl start ${image}.service
-                            EOF
+                    EOF
                         """
+                        keyPath
                     }
                 }
             }
