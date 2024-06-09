@@ -107,7 +107,7 @@ resource "null_resource" "run_setup_additional_one" {
     type        = "ssh"
     host        = aws_instance.muh_ec2_one.public_ip
     user        = "ubuntu"
-    private_key = file("my-key-1.pem")
+    private_key = file("test_jen.pem")
   }
   provisioner "file" {
     source      = "${path.module}/setup_additional.sh"
@@ -141,7 +141,7 @@ resource "null_resource" "run_setup_additional_two" {
     type        = "ssh"
     host        = aws_instance.muh_ec2_two.public_ip
     user        = "ubuntu"
-    private_key = file("my-key-1.pem")
+    private_key = file("test_jen.pem")
   }
   provisioner "file" {
     source      = "${path.module}/setup_additional.sh"

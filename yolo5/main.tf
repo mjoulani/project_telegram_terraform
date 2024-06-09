@@ -32,7 +32,7 @@ resource "null_resource" "run_setup_additional" {
     type        = "ssh"
     host        = aws_instance.muh_ec2_yolo5.public_ip
     user        = "ubuntu"
-    private_key = file("my-key-1.pem")
+    private_key = file("test_jen.pem")
     #private_key = file("C:/jenkins_ec2_new/my-key-1.pem")
   }
 
