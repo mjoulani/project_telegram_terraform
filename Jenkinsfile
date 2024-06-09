@@ -146,7 +146,7 @@ pipeline {
 
                     def keyPath = "test_jen.pem"
                     sh "chmod 400 ${keyPath}"
-                    sh "chown jenkins:jenkins test_jen.pem"
+                    sh "chown jenkins:jenkins ${keyPath}"
                     sh 'pwd'
                     sh 'ls -lart'
 
@@ -158,8 +158,7 @@ pipeline {
 
                         sh """
                             echo ${ip}
-                            ssh -t -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip}<< 'EOF'
-                            set -e
+                            ssh -o StrictHostKeyChecking=no -i ${keyPath} ${user}@${ip} << EOF
                             sudo docker pull ${DOCKER_HUB_REPO}/${image}:latest
                             sudo docker run -d --name ${image} -p 8443:8443 ${DOCKER_HUB_REPO}/${image}:latest
                             echo '[Unit]
@@ -176,13 +175,13 @@ pipeline {
                             WantedBy=multi-user.target' | sudo tee /etc/systemd/system/${image}.service
                             sudo systemctl enable ${image}.service
                             sudo systemctl start ${image}.service
-                    EOF
+EOF
                         """
-                        keyPath
                     }
                 }
             }
         }
+
 
 
         stage('Terraform Destroy') {
