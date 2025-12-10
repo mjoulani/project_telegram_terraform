@@ -4,3 +4,4 @@ requests>=2.31.0
 flask>=2.3.2
 matplotlib
 boto3>=1.18.90
+urllib3>=2.6.0 # not directly required, pinned by Snyk to avoid a vulnerability
